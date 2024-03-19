@@ -20,6 +20,7 @@ import pandas as pd
 DTYPE_FOR_ARRAY = bool
 
 
+# canonicalize solutions
 def canonical_1(solution):
     """
     how to canonicalize one solution
@@ -39,6 +40,16 @@ def canonical(solutions):
     same but also turn into a set
     """
     return set(canonical_s(solutions))
+
+
+# locate and load packaged files
+def load_npy(filename):
+    with resources.path("exact_cover_samples.data", f"{filename}.npy") as p:
+        return np.load(p)
+
+def load_csv(filename):
+    with resources.path("exact_cover_samples.data", f"{filename}.csv") as p:
+        return pd.read_csv(p, header=None).to_numpy()
 
 
 # may be useful to test the algorithm on a trivial problem
@@ -234,14 +245,10 @@ def small_trimino_problem():
 
 def small_trimino_problem_from_file():
     return dict(
-        data=np.load("tests/data/small_trimino.npy"),
+        data=load_npy("small-trimino"),
         solutions=[(5, 13), (6, 12)],
     )
 
-
-def load_csv(filename):
-    with resources.path("exact_cover_samples.data", f"{filename}.csv") as p:
-        return pd.read_csv(p, header=None).to_numpy()
 
 def pentomino_chessboard_problem():
     to_cover = load_csv("pentominos-chessboard")
