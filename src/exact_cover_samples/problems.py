@@ -1,7 +1,8 @@
 """
-all functions whose name contains '_problem'
-are made part of the ALL_PROBLEMS list
+this module mainly exposes a dictionary ALL_PROBLEMS of the form
+problem_name -> problem_function
 
+each problem function returns a dict with 2 keys
 they should return a dict with
 - data: a numpy array
 - solutions: purpusefully left loosely specified as a collection of solutions
@@ -9,7 +10,7 @@ they should return a dict with
   tentatively we return them in the same order as the
   original article with the S heuristic
 
-there a are 3 helper tools that help canocalize solutions for comparison
+also there a are 3 helper tools that help canocalize solutions for comparison
 """
 
 from importlib import resources
@@ -27,13 +28,11 @@ def canonical_1(solution):
     """
     return tuple(sorted(solution))
 
-
 def canonical_s(solutions):
     """
     apply canonical_1 on all solutions, as a list in the original order
     """
     return [canonical_1(solution) for solution in solutions]
-
 
 def canonical(solutions):
     """
@@ -44,17 +43,30 @@ def canonical(solutions):
 
 # locate and load packaged files
 def load_npy(filename):
-    with resources.path("exact_cover_samples.data", f"{filename}.npy") as p:
-        return np.load(p)
+    p = resources.files("exact_cover_samples.data").joinpath(f"{filename}.npy")
+    return np.load(str(p))
 
 def load_csv(filename):
     with resources.path("exact_cover_samples.data", f"{filename}.csv") as p:
         return pd.read_csv(p, header=None).to_numpy()
 
 
+ALL_PROBLEMS = {}
+
+# a decorator to store functions in ALL_PROBLEMS as we go
+def add_to_all_problems(function):
+    """
+    add a problem to the ALL_PROBLEMS dict
+    """
+    name = function.__name__.replace("_", "-")
+    ALL_PROBLEMS[name] = function
+    return function
+
+
 # may be useful to test the algorithm on a trivial problem
 # since this is the one illustrated in the original article
-def knuth_original_problem():
+@add_to_all_problems
+def knuth_original():
     to_cover = np.array(
         [
             [0, 0, 1, 0, 1, 1, 0],
@@ -70,7 +82,8 @@ def knuth_original_problem():
 
 # same problem in fact, but expressed a little differently
 # https://en.wikipedia.org/wiki/Exact_cover#Detailed_example
-def detailed_wikipedia_problem():
+@add_to_all_problems
+def detailed_wikipedia():
     sets = [
         {1, 4, 7},
         {1, 4},  # <- 1
@@ -88,7 +101,8 @@ def detailed_wikipedia_problem():
     )
 
 
-def bruteforce_problem1():
+@add_to_all_problems
+def bruteforce1():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
         [0, 1, 0, 0, 1, 0, 0, 1],  # <- sol1
@@ -102,7 +116,8 @@ def bruteforce_problem1():
     )
 
 
-def bruteforce_problem2():
+@add_to_all_problems
+def bruteforce2():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
         [0, 1, 0, 0, 1, 0, 0, 1],  # <- sol1
@@ -132,7 +147,8 @@ def bruteforce_problem2():
     )
 
 
-def bruteforce_problem3():
+@add_to_all_problems
+def bruteforce3():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
         [0, 1, 0, 0, 1, 0, 0, 1],  # <- sol1
@@ -172,8 +188,9 @@ def bruteforce_problem3():
     )
 
 
-def bruteforce3_with_odd_zero_rows_problem():
-    p = bruteforce_problem3()
+@add_to_all_problems
+def bruteforce3_odd_zeros():
+    p = bruteforce3()
     d, s = p["data"], p["solutions"]
     r, c = d.shape
     # add same area of 0s on the right hand side of d
@@ -186,8 +203,9 @@ def bruteforce3_with_odd_zero_rows_problem():
     return dict(data=d2, solutions=s)
 
 
-def bruteforce3_with_even_zero_rows_problem():
-    p = bruteforce_problem3()
+@add_to_all_problems
+def bruteforce3_even_zeros():
+    p = bruteforce3()
     d, s = p["data"], p["solutions"]
     r, c = d.shape
     # add same area of 0s on the left hand side of d
@@ -220,7 +238,8 @@ def bruteforce3_with_even_zero_rows_problem():
 
 # this problem has 2 solutions
 # (5, 13) and (6, 12)
-def small_trimino_problem():
+@add_to_all_problems
+def small_trimino():
     to_cover = [
         [1, 0, 0, 1, 1, 0, 1, 0],
         [1, 0, 0, 0, 1, 1, 0, 1],
@@ -243,14 +262,16 @@ def small_trimino_problem():
     )
 
 
-def small_trimino_problem_from_file():
+@add_to_all_problems
+def small_trimino_from_file():
     return dict(
         data=load_npy("small-trimino"),
         solutions=[(5, 13), (6, 12)],
     )
 
 
-def pentomino_chessboard_problem():
+@add_to_all_problems
+def pentomino_chessboard():
     to_cover = load_csv("pentominos-chessboard")
     solutions = load_csv("pentominos-chessboard-solutions")
 
@@ -260,22 +281,14 @@ def pentomino_chessboard_problem():
     )
 
 
-def pentomino_5_12_problem():
+@add_to_all_problems
+def pentomino_5_12():
     to_cover = load_csv("pentominos-5-12")
     solutions = load_csv("pentominos-5-12-solutions")
     return dict(
         data=to_cover,
         solutions=solutions,
     )
-
-# a dictionary
-# problem_name -> problem_function
-# testers can iterate on this dict to test all problems
-
-ALL_PROBLEMS = {
-    symbol: globals()[symbol]
-    for symbol in globals() if "_problem" in symbol
-}
 
 
 def summary():
@@ -284,10 +297,10 @@ def summary():
     """
     print(f"{8*'-'} we have a total of {len(ALL_PROBLEMS)} problems")
     for name, function in ALL_PROBLEMS.items():
+        print(f"{' '+name+' ':=^50}")
         problem = function()
         data = problem["data"]
         solutions = problem["solutions"]
-        print(f"{4*'='} Problem '{name}'")
         print(f"size = {data.shape}, "
               f"{len(canonical(solutions))} solutions")
 
