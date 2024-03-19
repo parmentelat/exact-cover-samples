@@ -291,12 +291,17 @@ def pentomino_5_12():
     )
 
 
-def summary():
+def summary(filter=None):
     """
     convenience to display a summary of all problems
     """
-    print(f"{8*'-'} we have a total of {len(ALL_PROBLEMS)} problems")
+    if not filter:
+        print(f"{8*'-'} we have a total of {len(ALL_PROBLEMS)} problems")
+    else:
+        print(f"the problems whose name contains '{filter}' are:")
     for name, function in ALL_PROBLEMS.items():
+        if filter is not None and filter not in name:
+            continue
         print(f"{' '+name+' ':=^50}")
         problem = function()
         data = problem["data"]
