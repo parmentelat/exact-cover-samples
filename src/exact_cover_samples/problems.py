@@ -1,6 +1,6 @@
 """
-this module mainly exposes a dictionary ALL_PROBLEMS of the form
-problem_name -> problem_function
+this module mainly exposes a dictionary 'problems'
+of the form problem_name -> problem_function
 
 each problem function returns a dict with 2 keys
 they should return a dict with
@@ -47,25 +47,25 @@ def load_npy(filename):
     return np.load(str(p))
 
 def load_csv(filename):
-    with resources.path("exact_cover_samples.data", f"{filename}.csv") as p:
-        return pd.read_csv(p, header=None).to_numpy()
+    p = resources.files("exact_cover_samples.data").joinpath(f"{filename}.csv")
+    return pd.read_csv(p, header=None).to_numpy()
 
 
-ALL_PROBLEMS = {}
+problems = {}
 
-# a decorator to store functions in ALL_PROBLEMS as we go
-def add_to_all_problems(function):
+# a decorator to store functions in problems as we go
+def add_to_problems(function):
     """
-    add a problem to the ALL_PROBLEMS dict
+    add a problem to the problems dict
     """
     name = function.__name__.replace("_", "-")
-    ALL_PROBLEMS[name] = function
+    problems[name] = function
     return function
 
 
 # may be useful to test the algorithm on a trivial problem
 # since this is the one illustrated in the original article
-@add_to_all_problems
+@add_to_problems
 def knuth_original():
     to_cover = np.array(
         [
@@ -82,7 +82,7 @@ def knuth_original():
 
 # same problem in fact, but expressed a little differently
 # https://en.wikipedia.org/wiki/Exact_cover#Detailed_example
-@add_to_all_problems
+@add_to_problems
 def detailed_wikipedia():
     sets = [
         {1, 4, 7},
@@ -101,7 +101,7 @@ def detailed_wikipedia():
     )
 
 
-@add_to_all_problems
+@add_to_problems
 def bruteforce1():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
@@ -116,7 +116,7 @@ def bruteforce1():
     )
 
 
-@add_to_all_problems
+@add_to_problems
 def bruteforce2():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
@@ -147,7 +147,7 @@ def bruteforce2():
     )
 
 
-@add_to_all_problems
+@add_to_problems
 def bruteforce3():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
@@ -188,7 +188,7 @@ def bruteforce3():
     )
 
 
-@add_to_all_problems
+@add_to_problems
 def bruteforce3_odd_zeros():
     p = bruteforce3()
     d, s = p["data"], p["solutions"]
@@ -203,7 +203,7 @@ def bruteforce3_odd_zeros():
     return dict(data=d2, solutions=s)
 
 
-@add_to_all_problems
+@add_to_problems
 def bruteforce3_even_zeros():
     p = bruteforce3()
     d, s = p["data"], p["solutions"]
@@ -238,7 +238,7 @@ def bruteforce3_even_zeros():
 
 # this problem has 2 solutions
 # (5, 13) and (6, 12)
-@add_to_all_problems
+@add_to_problems
 def small_trimino():
     to_cover = [
         [1, 0, 0, 1, 1, 0, 1, 0],
@@ -262,7 +262,7 @@ def small_trimino():
     )
 
 
-@add_to_all_problems
+@add_to_problems
 def small_trimino_from_file():
     return dict(
         data=load_npy("small-trimino"),
@@ -270,7 +270,7 @@ def small_trimino_from_file():
     )
 
 
-@add_to_all_problems
+@add_to_problems
 def pentomino_chessboard():
     to_cover = load_csv("pentominos-chessboard")
     solutions = load_csv("pentominos-chessboard-solutions")
@@ -281,7 +281,7 @@ def pentomino_chessboard():
     )
 
 
-@add_to_all_problems
+@add_to_problems
 def pentomino_5_12():
     to_cover = load_csv("pentominos-5-12")
     solutions = load_csv("pentominos-5-12-solutions")
@@ -296,10 +296,10 @@ def summary(filter=None):
     convenience to display a summary of all problems
     """
     if not filter:
-        print(f"{8*'-'} we have a total of {len(ALL_PROBLEMS)} problems")
+        print(f"{8*'-'} we have a total of {len(problems)} problems")
     else:
         print(f"the problems whose name contains '{filter}' are:")
-    for name, function in ALL_PROBLEMS.items():
+    for name, function in problems.items():
         if filter is not None and filter not in name:
             continue
         print(f"{' '+name+' ':=^50}")
