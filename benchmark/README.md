@@ -41,7 +41,9 @@ go into `results.csv`
 - problem: a standardized problem name
 - run: the run number; 0 means the first run, it may be useful to discard
   the first run as it may include some warmup time
-- nb_solutions: how many solutions were found
+- requested: how many solutions were requested
+- expected: how many solutions were expected
+- computed: how many solutions were computed
 - finite: if True, it means the caller has asked for a finite number of solutions
   otherwise all solutions were returned
 - time: the time it took to solve the problem, in seconds

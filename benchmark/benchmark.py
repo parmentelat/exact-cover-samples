@@ -104,20 +104,28 @@ ALL_LIBS = [ExactCover(), ExactCoverPy(), XCover()]
 
 
 def run_library(lib, problem, run_index, size):
+    requested = size
+    expected = len(problem["solutions"])
+    if size != 0:
+        expected = min(size, expected)
     start = time.perf_counter()
     try:
-        result = lib.run(problem, size)
+        computed = lib.run(problem, size)
         end = time.perf_counter()
-        return dict(
+        result = dict(
             library=lib.name, version=lib.version,
             problem=problem['shortname'], run=run_index,
-            nb_solutions=result, finite=True, time=end - start,
-            error="")
+            requested=requested, expected=expected, computed=computed,
+            time=end - start, error="")
+        if computed != expected:
+            result["error"] = f"expected {expected} but got {computed}"
+        return result
     except Exception as e:
         return dict(
             library=lib.name, version=lib.version,
             problem=problem['shortname'], run=run_index,
-            nb_solutions=0, finite=True, time=0.0, error=str(e))
+            requested=requested, expected=expected, computed=-1,
+            time=0.0, error=str(e))
 
 
 
