@@ -13,6 +13,7 @@ they should return a dict with
 also there a are 3 helper tools that help canocalize solutions for comparison
 """
 
+from functools import partial
 from importlib import resources
 
 import numpy as np
@@ -54,18 +55,24 @@ def load_csv(filename):
 problems = {}
 
 # a decorator to store functions in problems as we go
-def add_to_problems(function):
+# a decorator to store functions in problems as we go
+def add_to_problems(shortname, function):
     """
     add a problem to the problems dict
     """
     name = function.__name__.replace("_", "-")
-    problems[name] = function
-    return function
+    def wrapped():
+        raw = function()
+        raw['name'] = name
+        raw['shortname'] = shortname
+        return raw
+    problems[shortname] = wrapped
+    return wrapped
 
 
 # may be useful to test the algorithm on a trivial problem
 # since this is the one illustrated in the original article
-@add_to_problems
+@partial(add_to_problems, "knuth")
 def knuth_original():
     to_cover = np.array(
         [
@@ -82,7 +89,7 @@ def knuth_original():
 
 # same problem in fact, but expressed a little differently
 # https://en.wikipedia.org/wiki/Exact_cover#Detailed_example
-@add_to_problems
+@partial(add_to_problems, "wikip")
 def detailed_wikipedia():
     sets = [
         {1, 4, 7},
@@ -101,7 +108,7 @@ def detailed_wikipedia():
     )
 
 
-@add_to_problems
+@partial(add_to_problems, "brtf1")
 def bruteforce1():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
@@ -116,7 +123,7 @@ def bruteforce1():
     )
 
 
-@add_to_problems
+@partial(add_to_problems, "brtf2")
 def bruteforce2():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
@@ -147,7 +154,7 @@ def bruteforce2():
     )
 
 
-@add_to_problems
+@partial(add_to_problems, "btrf3")
 def bruteforce3():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
@@ -188,7 +195,7 @@ def bruteforce3():
     )
 
 
-@add_to_problems
+@partial(add_to_problems, "btrf30")
 def bruteforce3_odd_zeros():
     p = bruteforce3()
     d, s = p["data"], p["solutions"]
@@ -203,7 +210,7 @@ def bruteforce3_odd_zeros():
     return dict(data=d2, solutions=s)
 
 
-@add_to_problems
+@partial(add_to_problems, "btrf31")
 def bruteforce3_even_zeros():
     p = bruteforce3()
     d, s = p["data"], p["solutions"]
@@ -238,7 +245,7 @@ def bruteforce3_even_zeros():
 
 # this problem has 2 solutions
 # (5, 13) and (6, 12)
-@add_to_problems
+@partial(add_to_problems, "strim")
 def small_trimino():
     to_cover = [
         [1, 0, 0, 1, 1, 0, 1, 0],
@@ -262,7 +269,7 @@ def small_trimino():
     )
 
 
-@add_to_problems
+@partial(add_to_problems, "strimf")
 def small_trimino_from_file():
     return dict(
         data=load_npy("small-trimino"),
@@ -270,7 +277,7 @@ def small_trimino_from_file():
     )
 
 
-@add_to_problems
+@partial(add_to_problems, "pchess")
 def pentomino_chessboard():
     to_cover = load_csv("pentominos-chessboard")
     solutions = load_csv("pentominos-chessboard-solutions")
@@ -281,14 +288,31 @@ def pentomino_chessboard():
     )
 
 
-@add_to_problems
-def pentomino_5_12():
+@partial(add_to_problems, "p5x12")
+def pentomino_5x12():
     to_cover = load_csv("pentominos-5-12")
     solutions = load_csv("pentominos-5-12-solutions")
     return dict(
         data=to_cover,
         solutions=solutions,
     )
+
+
+def print_problem(problem, header=False):
+    name = problem["name"]
+    shortname = problem["shortname"]
+    data = problem["data"]
+    solutions = problem["solutions"]
+    if header:
+        print(f"{' '+shortname+' ':=^50}")
+        repeat = ""
+    else:
+        repeat = f"short={shortname} "
+    print(
+            f"{repeat}"
+            f"size = {data.shape}, "
+            f" {len(canonical(solutions))} solutions"
+            f" full_name={name}")
 
 
 def summary(filter=None):
@@ -299,15 +323,34 @@ def summary(filter=None):
         print(f"{8*'-'} we have a total of {len(problems)} problems")
     else:
         print(f"the problems whose name contains '{filter}' are:")
-    for name, function in problems.items():
-        if filter is not None and filter not in name:
-            continue
-        print(f"{' '+name+' ':=^50}")
+    for shortname, function in problems.items():
         problem = function()
-        data = problem["data"]
-        solutions = problem["solutions"]
-        print(f"size = {data.shape}, "
-              f"{len(canonical(solutions))} solutions")
+        name = problem['name']
+        if filter is not None and filter not in name and filter not in shortname:
+            continue
+        print_problem(problem, header=True)
+
+def spot(needle):
+    """
+    returns the first problem instance whose name or shortname contains needle
+    """
+    for shortname, function in problems.items():
+        problem = function()
+        name = problem['name']
+        if needle in name or needle in shortname:
+            return problem
+
 
 if __name__ == "__main__":
-    summary()
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    parser.add_argument("-l", "--list", action="store_true")
+    parser.add_argument("problem", nargs='?', default=None)
+    args = parser.parse_args()
+    if args.list:
+        if args.problem:
+            summary(args.problem)
+        else:
+            summary()
+    elif args.problem:
+        print_problem(spot(args.problem))

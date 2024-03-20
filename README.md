@@ -19,17 +19,17 @@ from exact_cover_samples import problems
 `problems` is a dictionary with the following structure:
 
 ```python
-{
-    "problem_name": function
-}
+{ "shortname": function, ... }
 ```
 
-where `problem_name` is a string and `function` is a function that in turn returns a dictionary with the following structure:
+where `shortname` is a string and `function` is a function that in turn returns a dictionary with the following structure:
 
 ```python
 {
-    "data": np.ndarray,            # of ndim=2 and dtype=bool
-    "solutions": list[list[int]]   # each solution is a list of indices in data
+    "shortname": str,               # short name of the problem
+    "name": str,                    # long name of the problem
+    "data": np.ndarray,             # of ndim=2 and dtype=bool
+    "solutions": list[list[int]]    # each solution is a list of indices in data
 }
 
 in some cases `solutions` is an nd-array too - see below how to canonicalize for comparing solutions.
@@ -44,7 +44,7 @@ from exact_cover_samples import summary
 
 summary()
 # or to filter a bit
-summary("pentamino")
+summary("pent")
 ```
 
 ### canonical representation
@@ -67,11 +67,21 @@ type(canonical(s))
 -> set
 ```
 
-so that as long as your code produces solutions as an iterable of iterables, you should be able to use `canonical` to compare them
+so that as long as your code produces solutions as an iterable of iterables, 
+you should be able to use `canonical` to compare them like so
 
 ```
-p = problems["knuth-original"]()
+# import this module
+import exact_cover_samples as ecs
+# import a solver module
+from exact_cover_py import exact_covers
+
+# get a problem
+p = ecs.problems["knuth"]()
+# get the expected solutions
 expected = p["solutions"]
-computed = your_code(p["data"])
-assert canonical(expected) == canonical(computed)
+# get the computed solutions
+computed = exact_covers(p["data"])
+# compare them
+assert ecs.canonical(expected) == ecs.canonical(computed)
 ```
