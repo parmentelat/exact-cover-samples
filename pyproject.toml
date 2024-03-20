@@ -28,10 +28,6 @@ classifiers = [
 
 
 [project.optional-dependencies]
-# tests = [
-#     "pytest",
-#     "pandas",
-# ]
 build = [
     "build",
     "hatchling",
