@@ -354,3 +354,5 @@ if __name__ == "__main__":
             summary()
     elif args.problem:
         print_problem(spot(args.problem))
+    else:
+        summary()
