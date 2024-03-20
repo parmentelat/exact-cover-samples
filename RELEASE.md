@@ -1,5 +1,11 @@
 # develop and release
 
+## requirements
+
+```bash
+pip install .[build]
+```
+
 ## build
 
 ```bash
