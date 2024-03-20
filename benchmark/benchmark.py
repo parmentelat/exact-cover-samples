@@ -38,79 +38,87 @@ def store_records(records):
     new_results = pd.DataFrame(records)
     pd.concat([past_records, new_results], ignore_index=True).to_csv(RESULTS, index=False)
 
-# a decorator that catches exceptions and returns a special result
-def protect_exception(libname, version, fn):
-    def wrapped(name, problem, run_index, n):
-        try:
-            return fn(name, problem, run_index, n)
-        except Exception as e:
-            return dict(
-                library=libname, version=version,
-                problem=name, run=run_index,
-                nb_solutions=0, finite=True, time=0.0, error=str(e))
-    return wrapped
+# # a decorator that catches exceptions and returns a special result
+# def protect_exception(libname, version, fn):
+#     def wrapped(name, problem, run_index, n):
+#         try:
+#             return fn(name, problem, run_index, n)
+#         except Exception as e:
+#             return dict(
+#                 library=libname, version=version,
+#                 problem=name, run=run_index,
+#                 nb_solutions=0, finite=True, time=0.0, error=str(e))
+#     return wrapped
 
 
-# only return first solution
-@partial(protect_exception, "exact-cover", exact_cover_version)
-def run_exact_cover(name, problem, run_index, n):
+class Library:
+    def run(self, problem, size):
+        raise NotImplementedError
+
+class ExactCover(Library):
+    def __init__(self):
+        self.name = "exact-cover"
+        self.version = exact_cover_version
+    def run(self, problem, size):
+        if size == 1:
+            r = [get_exact_cover(problem["data"])]
+        elif size == 0:
+            r = get_exact_covers(problem["data"])
+        else:
+            r = get_exact_covers(problem["data"], max_count=size)
+        return len(r)
+
+class ExactCoverPy(Library):
+    def __init__(self):
+        self.name = "exact-cover-py"
+        self.version = exact_cover_py_version
+    def run(self, problem, size):
+        solutions = exact_covers(problem["data"])
+        if size > 0:
+            counter = size
+            for _ in range(size):
+                next(solutions)
+        elif size == 0:
+            counter = 0
+            for _ in solutions:
+                counter += 1
+        return counter
+
+class XCover(Library):
+    def __init__(self):
+        self.name = "xcover"
+        self.version = xcover_version
+    def run(self, problem, size):
+        solutions = covers_bool(problem["data"])
+        if size > 0:
+            counter = size
+            for _ in range(size):
+                next(solutions)
+        elif size == 0:
+            counter = 0
+            for _ in solutions:
+                counter += 1
+        return counter
+
+ALL_LIBS = [ExactCover(), ExactCoverPy(), XCover()]
+
+
+def run_library(lib, problem, run_index, size):
     start = time.perf_counter()
-    finite = (n > 0)
-    if n == 1:
-        solutions = [get_exact_cover(problem["data"])]
-    elif n >= 0:
-        max_count = None if n == 0 else n
-        solutions = [get_exact_covers(problem["data"], max_count=max_count)]
-    nb_solutions = len(solutions)
-    end = time.perf_counter()
-    return dict(
-        library='exact-cover', version=exact_cover_version,
-        problem=name, run=run_index,
-        nb_solutions=1, finite=True, time=end - start,
-        error="")
+    try:
+        result = lib.run(problem, size)
+        end = time.perf_counter()
+        return dict(
+            library=lib.name, version=lib.version,
+            problem=problem['shortname'], run=run_index,
+            nb_solutions=result, finite=True, time=end - start,
+            error="")
+    except Exception as e:
+        return dict(
+            library=lib.name, version=lib.version,
+            problem=problem['shortname'], run=run_index,
+            nb_solutions=0, finite=True, time=0.0, error=str(e))
 
-
-@partial(protect_exception, "exact-cover-py", exact_cover_py_version)
-def run_exact_cover_py(name, problem, run_index, n):
-    start = time.perf_counter()
-    solutions = exact_covers(problem["data"])
-    finite = (n > 0)
-    if n > 0:
-        counter = n
-        for _ in range(n):
-            next(solutions)
-    elif n == 0:
-        counter = 0
-        for _ in solutions:
-            counter += 1
-    end = time.perf_counter()
-    return dict(
-        library='exact-cover-py', version=exact_cover_py_version,
-        problem=name, run=run_index,
-        nb_solutions=counter, finite=finite, time=end - start,
-        error="")
-    # print(f"time 5x12 - {n} solutions {end - start:.6f} s")
-
-
-@partial(protect_exception, "xcover", xcover_version)
-def run_xcover(name, problem, run_index, n):
-    start = time.perf_counter()
-    solutions = covers_bool(problem["data"])
-    finite = (n > 0)
-    if n > 0:
-        counter = n
-        for _ in range(n):
-            next(solutions)
-    elif n == 0:
-        counter = 0
-        for _ in solutions:
-            counter += 1
-    end = time.perf_counter()
-    return dict(
-        library='xcover', version=xcover_version,
-        problem=name, run=run_index,
-        nb_solutions=counter, finite=finite, time=end - start,
-        error="")
 
 
 def run_once(run_index, full=False):
@@ -122,19 +130,13 @@ def run_once(run_index, full=False):
     if full:
         sizes.append(0)
     problems = ecs.problems
-    for name, problem_fn in problems.items():
+    for problem_fn in problems.values():
         problem = problem_fn()
-        print(f"=== problem {name}")
-        print("exact-cover")
-        store_records(
-            [run_exact_cover(name, problem, run_index, size) for size in sizes])
-        print("xcover")
-        store_records(
-            [run_xcover(name, problem, run_index, size) for size in sizes])
-        print("exact-cover-py")
-        store_records(
-            [run_exact_cover_py(name, problem, run_index, size) for size in sizes])
-
+        print(f"=== problem {problem['name']}")
+        for lib in ALL_LIBS:
+            print(f"= library {lib.name}")
+            store_records(
+                [run_library(lib, problem, run_index, size) for size in sizes])
 
 def main():
     parser = ArgumentParser()

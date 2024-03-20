@@ -45,6 +45,6 @@ go into `results.csv`
 - finite: if True, it means the caller has asked for a finite number of solutions
   otherwise all solutions were returned
 - time: the time it took to solve the problem, in seconds
-- error: 
+- error: a string that may contain:
   - if the library raised an exception, it is reported here
   - if a mismatch was detected between the solutions, it is reported here
