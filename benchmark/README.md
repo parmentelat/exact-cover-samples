@@ -29,8 +29,14 @@ cd benchmark
 
 ```bash
 # still in benchmark/
-python benchmark.py
+python benchmark.py -r 2 -f
 ```
+
+options:
+
+- `--runs` to specify the number of runs (default 1)
+- `--full` to run with no limit (othrwise will go for 1 and 50 solutions only)
+- `--algo` to specify the algorithm to run (default all)
 
 ## Results
 
@@ -50,3 +56,10 @@ go into `results.csv`
 - error: a string that may contain:
   - if the library raised an exception, it is reported here
   - if a mismatch was detected between the solutions, it is reported here
+
+## Figures
+
+see jupyter notebook `postprocess-nb.py`
+
+which is also runnable as a script `python postprocess-nb.py`
+and will produce `results.png` and `results.svg`

@@ -35,6 +35,8 @@ build = [
 ]
 benchmark = [
     "pandas",
+    "matplotlib",
+    "ipympl",
     "exact-cover",
     "exact-cover-py",
     "xcover",

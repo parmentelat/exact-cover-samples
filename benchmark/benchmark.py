@@ -5,7 +5,6 @@ see README.md for more details
 import time
 from pathlib import Path
 from argparse import ArgumentParser
-from functools import partial
 
 import pandas as pd
 
@@ -38,19 +37,8 @@ def store_records(records):
     new_results = pd.DataFrame(records)
     pd.concat([past_records, new_results], ignore_index=True).to_csv(RESULTS, index=False)
 
-# # a decorator that catches exceptions and returns a special result
-# def protect_exception(libname, version, fn):
-#     def wrapped(name, problem, run_index, n):
-#         try:
-#             return fn(name, problem, run_index, n)
-#         except Exception as e:
-#             return dict(
-#                 library=libname, version=version,
-#                 problem=name, run=run_index,
-#                 nb_solutions=0, finite=True, time=0.0, error=str(e))
-#     return wrapped
 
-
+# run the algorithms, each lib has its own logic
 class Library:
     def run(self, problem, size):
         raise NotImplementedError
@@ -75,9 +63,13 @@ class ExactCoverPy(Library):
     def run(self, problem, size):
         solutions = exact_covers(problem["data"])
         if size > 0:
-            counter = size
-            for _ in range(size):
-                next(solutions)
+            counter = 0
+            try:
+                for _ in range(size):
+                    next(solutions)
+                    counter += 1
+            except StopIteration:
+                pass
         elif size == 0:
             counter = 0
             for _ in solutions:
@@ -91,16 +83,20 @@ class XCover(Library):
     def run(self, problem, size):
         solutions = covers_bool(problem["data"])
         if size > 0:
-            counter = size
-            for _ in range(size):
-                next(solutions)
+            counter = 0
+            try:
+                for _ in range(size):
+                    next(solutions)
+                    counter += 1
+            except StopIteration:
+                pass
         elif size == 0:
             counter = 0
             for _ in solutions:
                 counter += 1
         return counter
 
-ALL_LIBS = [ExactCover(), ExactCoverPy(), XCover()]
+ALL_LIBS = [ExactCover(), XCover(), ExactCoverPy()]
 
 
 def run_library(lib, problem, run_index, size):
@@ -129,7 +125,7 @@ def run_library(lib, problem, run_index, size):
 
 
 
-def run_once(run_index, full=False):
+def run(algo, full, runs):
     # the various configurations we try
     # sizes means how many solutions we want to compute
     # with 0 meaning all of them
@@ -137,22 +133,32 @@ def run_once(run_index, full=False):
     sizes = [1, 50]
     if full:
         sizes.append(0)
+    if algo == -1:
+        libs = ALL_LIBS
+    elif 0 <= algo < len(ALL_LIBS):
+        libs = [ALL_LIBS[algo]]
+    else:
+        raise ValueError(f"invalid algo {algo}")
     problems = ecs.problems
     for problem_fn in problems.values():
         problem = problem_fn()
         print(f"=== problem {problem['name']}")
-        for lib in ALL_LIBS:
-            print(f"= library {lib.name}")
-            store_records(
-                [run_library(lib, problem, run_index, size) for size in sizes])
+        for lib in libs:
+            for run_index in range(runs):
+                print(f"= library {lib.name} (run {run_index})")
+                store_records(
+                    [run_library(lib, problem, run_index, size)
+                     for size in sizes])
 
 def main():
     parser = ArgumentParser()
-    parser.add_argument("-r", "--repeat", type=int, default=1)
+    parser.add_argument("-r", "--runs", type=int, default=1)
     parser.add_argument("-f", "--full", action="store_true", default=False)
+    parser.add_argument("-a", "--algo", action="store",
+                        type=int, default=-1,
+                        help="0: exact-cover, 1: xcover, 2: exact-cover-py")
     args = parser.parse_args()
-    for run_index in range(args.repeat):
-        run_once(run_index, args.full)
+    run(args.algo, args.full, args.runs)
 
 if __name__ == "__main__":
     main()
