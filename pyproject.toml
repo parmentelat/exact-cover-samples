@@ -10,7 +10,7 @@ Issues = "https://github.com/parmentelat/exact-cover-samples/issues"
 
 [project]
 name = "exact_cover_samples"
-version = "0.0.3"
+version = "0.0.4"
 description = "Some exact cover problems and their solutions"
 readme = "README.md"
 license="CC-BY-NC-4.0"
@@ -35,16 +35,9 @@ build = [
 ]
 benchmark = [
     "pandas",
-    "matplotlib",
-    "ipympl",
     "exact-cover",
     "exact-cover-py",
     "xcover",
-]
-
-[tool.hatch.build]
-include = [
-    "src/exact_cover_samples/data/*.csv",
 ]
 
 # get rid of a naughty warning
