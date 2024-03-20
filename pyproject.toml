@@ -10,7 +10,7 @@ Issues = "https://github.com/parmentelat/exact-cover-samples/issues"
 
 [project]
 name = "exact_cover_samples"
-version = "0.0.1"
+version = "0.0.2"
 description = "Some exact cover problems and their solutions"
 readme = "README.md"
 license="CC-BY-NC-4.0"
