@@ -192,7 +192,7 @@ def bruteforce2():
     )
 
 
-@partial(add_to_problems, "btrf3")
+@partial(add_to_problems, "brtf3")
 def bruteforce3():
     to_cover = [
         [1, 0, 0, 1, 0, 0, 1, 0],  # <- sol1
@@ -233,7 +233,7 @@ def bruteforce3():
     )
 
 
-@partial(add_to_problems, "btrf30")
+@partial(add_to_problems, "brtf30")
 def bruteforce3_odd_zeros():
     p = bruteforce3()
     d, s = p["data"], p["solutions"]
@@ -248,7 +248,7 @@ def bruteforce3_odd_zeros():
     return dict(data=d2, solutions=s)
 
 
-@partial(add_to_problems, "btrf31")
+@partial(add_to_problems, "brtf31")
 def bruteforce3_even_zeros():
     p = bruteforce3()
     d, s = p["data"], p["solutions"]
