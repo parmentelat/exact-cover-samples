@@ -34,9 +34,10 @@ python benchmark.py -r 2 -f
 
 options:
 
+- `--algo` to specify the algorithm to run (default all)
 - `--runs` to specify the number of runs (default 1)
 - `--full` to run with no limit (othrwise will go for 1 and 50 solutions only)
-- `--algo` to specify the algorithm to run (default all)
+- `--sizes` to specify the sizes to run; e.g. `--sizes 1,10` - has no effect if --full is set
 
 ## Results
 

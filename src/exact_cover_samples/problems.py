@@ -315,7 +315,7 @@ def small_trimino_from_file():
     )
 
 
-# pentominos
+# pentominos - the function name is to locate the data file
 
 @partial(add_to_problems_from_file, "p3x20")
 def pentominos_3_20(): pass

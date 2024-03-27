@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 see README.md for more details
 """
@@ -125,14 +127,11 @@ def run_library(lib, problem, run_index, size):
 
 
 
-def run(algo, full, runs):
+def run(algo, sizes, runs):
     # the various configurations we try
     # sizes means how many solutions we want to compute
     # with 0 meaning all of them
     # passing full=False will skip the 0 case
-    sizes = [1, 50]
-    if full:
-        sizes.append(0)
     if algo == -1:
         libs = ALL_LIBS
     elif 0 <= algo < len(ALL_LIBS):
@@ -154,11 +153,20 @@ def main():
     parser = ArgumentParser()
     parser.add_argument("-r", "--runs", type=int, default=1)
     parser.add_argument("-f", "--full", action="store_true", default=False)
+    parser.add_argument("-s", "--sizes", action="store",
+                        type=str, help="comma separated: how many solutions to compute")
     parser.add_argument("-a", "--algo", action="store",
                         type=int, default=-1,
                         help="0: exact-cover, 1: xcover, 2: exact-cover-py")
     args = parser.parse_args()
-    run(args.algo, args.full, args.runs)
+    if args.full:
+        sizes = [1, 50, 0]
+    elif args.sizes is None:
+        sizes = [1,  50]
+    else:
+        sizes = [int(x) for x in args.sizes.split(",")]
+    print(f"{sizes=}")
+    run(args.algo, sizes, args.runs)
 
 if __name__ == "__main__":
     main()
