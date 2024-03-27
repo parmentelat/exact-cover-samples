@@ -49,12 +49,15 @@ def load_npy(filename):
 
 def load_csv(filename):
     p = resources.files("exact_cover_samples.data").joinpath(f"{filename}.csv")
-    return pd.read_csv(p, header=None).to_numpy()
+    try:
+        return pd.read_csv(p, header=None).to_numpy()
+    except FileNotFoundError:
+        print(f"file {filename}.csv not found - returning empty dataframe")
+        return np.array([[0]])
 
 
 problems = {}
 
-# a decorator to store functions in problems as we go
 # a decorator to store functions in problems as we go
 def add_to_problems(shortname, function):
     """
@@ -70,9 +73,29 @@ def add_to_problems(shortname, function):
     return wrapped
 
 
+# a specialized version where the data is stored in the data/ folder
+def add_to_problems_from_file(shortname, function):
+    """
+    same as add_to_problems, with the data loaded from the data/ folder
+    in files named
+    filename.csv
+    and
+    filename-solutions.csv
+    """
+    name = function.__name__.replace("_", "-")
+    def wrapped():
+        return dict(
+            data=load_csv(name),
+            solutions=load_csv(f"{name}-solutions"),
+            name=name,
+            shortname=shortname,
+        )
+    problems[shortname] = wrapped
+    return wrapped
+
 # may be useful to test the algorithm on a trivial problem
 # since this is the one illustrated in the original article
-@partial(add_to_problems, "knuth")
+@partial(add_to_problems, "knuth2000")
 def knuth_original():
     to_cover = np.array(
         [
@@ -85,6 +108,21 @@ def knuth_original():
         ]
     )
     return {"data": to_cover, "solutions": [(0, 3, 4)]}
+
+
+@partial(add_to_problems, "knuth2019")
+def knuth_vol4():
+    text = """
+0010100
+1001001
+0110010
+1001010
+0100001
+0001101
+"""
+
+    data = np.array([[int(c) for c in line] for line in text.strip().split("\n") if line])
+    return {"data": data, "solutions": [(0, 3, 4)]}
 
 
 # same problem in fact, but expressed a little differently
@@ -277,25 +315,31 @@ def small_trimino_from_file():
     )
 
 
-@partial(add_to_problems, "pchess")
-def pentomino_chessboard():
-    to_cover = load_csv("pentominos-chessboard")
-    solutions = load_csv("pentominos-chessboard-solutions")
+# pentominos
 
-    return dict(
-        data=to_cover,
-        solutions=solutions,
-    )
+@partial(add_to_problems_from_file, "p3x20")
+def pentominos_3_20(): pass
 
+@partial(add_to_problems_from_file, "p4x15")
+def pentominos_4_15(): pass
 
-@partial(add_to_problems, "p5x12")
-def pentomino_5x12():
-    to_cover = load_csv("pentominos-5-12")
-    solutions = load_csv("pentominos-5-12-solutions")
-    return dict(
-        data=to_cover,
-        solutions=solutions,
-    )
+@partial(add_to_problems_from_file, "p5x12")
+def pentominos_5_12(): pass
+
+@partial(add_to_problems_from_file, "p6x10")
+def pentominos_6_10(): pass
+
+@partial(add_to_problems_from_file, "p2x5x6")
+def pentominos_2_5_6(): pass
+
+# 8x8 with a 2x2 square removed in the center
+@partial(add_to_problems_from_file, "p8x8")
+def pentominos_8_8(): pass
+
+# 8x9 with 2x2 squares removed in the corners
+@partial(add_to_problems_from_file, "p8x9")
+def pentominos_8_9(): pass
+
 
 
 def print_problem(problem, header=False):
