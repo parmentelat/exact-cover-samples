@@ -28,13 +28,13 @@ import matplotlib.pyplot as plt
 # %matplotlib ipympl
 
 # %% [markdown]
-# # benchmarking
+# # drawing benchmark results
 
 # %% [markdown]
 # ## loading results
 
 # %%
-df = pd.read_csv("results.csv")
+df = pd.read_csv("results.csv", keep_default_na=False)
 df.shape
 
 # %%
@@ -44,42 +44,63 @@ df.head()
 # ## errors
 
 # %%
-df[df.computed == -1]
+import math
 
-# %%
-df[df.error.notna()]
+df.loc[(df.computed == -1) | (df.error != ""), 'time'] = math.nan
+
+df[(df.computed == -1) | (df.error != "")].head()
 
 # %% [markdown]
-# ## keeping only run 1
+# ## keeping only run 1 (if available)
 
 # %%
-df = df[df.run == 1]
+run0 = df[df.run == 0]
+run1 = df[df.run == 1]
+if len(run1):
+    df = run1
+else:
+    df = run0
 df.shape
 
-# %% [markdown]
-# ## artificially divide exact-cover-py by 50
-
 # %%
-time_series = df.time
-updated = time_series[df.library == "exact-cover-py"] / 50
-time_series.update(updated)
-
-library_series = df.library
-updated = library_series[df.library == "exact-cover-py"]
-updated[:] = "exact-cover-py / 50"
-library_series.update(updated)
+df.head()
 
 # %% [markdown]
 # ## drawing
 
+# %% [markdown]
+# ### keep only relevant columns
+
 # %%
+# only these columns
 keep = "library+problem+requested+time".split("+")
 
-table = df[keep].pivot_table(columns=["requested", "library"], index="problem", values="time")
-table
+# %% [markdown]
+# ### pivot
 
 # %%
-df_all_solutions = table.loc[:, 0]
-df_all_solutions.plot()
+# pivot 
+table = df[keep].pivot_table(columns=["requested", "library"], index="problem", values="time")
+table.head(5)
+
+# %% [markdown]
+# ### sort
+
+# %%
+# spot first column done by 'xcover'
+for col in table.columns:
+    size, algo = col
+    if algo == 'xcover':
+        table.sort_values(by=col, inplace=True)
+        break
+
+table
+
+# %% [markdown]
+# ### draw
+
+# %%
+df_all_sizes = table.loc[:, 0]
+df_all_sizes.plot()
 plt.savefig("results.svg", format="svg")
 plt.savefig("results.png", format="png")
