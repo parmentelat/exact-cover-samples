@@ -160,9 +160,9 @@ def main():
                         help="0: exact-cover, 1: xcover, 2: exact-cover-py")
     args = parser.parse_args()
     if args.full:
-        sizes = [1, 50, 0]
+        sizes = [1, 0]
     elif args.sizes is None:
-        sizes = [1,  50]
+        sizes = [1]
     else:
         sizes = [int(x) for x in args.sizes.split(",")]
     print(f"{sizes=}")
