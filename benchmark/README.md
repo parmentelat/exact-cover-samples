@@ -11,11 +11,11 @@ algorithm, a.k.a. Algorithm X a.k.a. Dancing Links
 
 - `pip install xcover`  
   from `https://github.com/johnrudge/xcover`  
-  a Python/numba
+  a Python/numba implementation of algorithm C
 
 - `pip install exact_cover_py`
-  from the local repo `https://github.com/parmentelat/exact-cover-py`  
-  a pure Python implementation
+  from `https://github.com/parmentelat/exact-cover-py`  
+  a Python/numba implementation of algorithm X
 
 ## Requirements
 
@@ -29,6 +29,7 @@ cd benchmark
 
 ```bash
 # still in benchmark/
+[ -f results.csv ] && mv results.csv results.csv.bak
 python benchmark.py -r 2 -f
 ```
 
