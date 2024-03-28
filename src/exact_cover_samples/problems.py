@@ -263,6 +263,31 @@ def bruteforce3_even_zeros():
     return dict(data=d2, solutions=s)
 
 
+@partial(add_to_problems, "lgfd3")
+def langford3():
+    raw = [
+        "1s1s3",
+        "1s2s4",
+        "1s3s5",
+        "1s4s6",
+        "2s1s4",
+        "2s2s5",
+        "2s3s6",
+        "3s1s5",
+        "3s2s6",
+    ]
+    to_cover = np.zeros((len(raw), 3*3), dtype=bool)
+    for i, line in enumerate(raw):
+        j, si, sj = [int(x) for x in line.split("s")]
+        j = j-1
+        to_cover[i, j] = True
+        to_cover[i, 3 + si-1] = True
+        to_cover[i, 3 + sj-1] = True
+    return dict(
+        data=to_cover,
+        solutions=[(2, 4, 8), (1, 6, 7)],
+    )
+
 # problem originally based on solving the trivial problem
 # of arranging 2 identical triminos on a 3x3 board
 
